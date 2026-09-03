@@ -6,7 +6,7 @@ struct Particle {
 
 struct ViewParams {
   resolution : vec2f,
-  size       : f32,   // parçacık kenar uzunluğu (piksel)
+  size       : f32,   // particle edge length (pixels)
   _pad       : f32,
 };
 
@@ -23,7 +23,7 @@ fn vs_main(
   @builtin(vertex_index) vi : u32,
   @builtin(instance_index) ii : u32,
 ) -> VSOut {
-  // Birim kare: iki üçgen, 6 köşe. Vertex buffer yok, tablo shader'ın içinde.
+  // Unit quad: two triangles, 6 vertices. No vertex buffer, the table lives inside the shader.
   var corners = array<vec2f, 6>(
     vec2f(-1.0, -1.0), vec2f( 1.0, -1.0), vec2f(-1.0,  1.0),
     vec2f(-1.0,  1.0), vec2f( 1.0, -1.0), vec2f( 1.0,  1.0),
@@ -32,7 +32,7 @@ fn vs_main(
   let p = particles[ii];
   let px = p.pos + corners[vi] * view.size * 0.5;
 
-  // piksel -> clip-space (-1..1), y ekseni ters
+  // pixels -> clip space (-1..1), y axis flipped
   let clip = vec2f(
     px.x / view.resolution.x * 2.0 - 1.0,
     1.0 - px.y / view.resolution.y * 2.0,
@@ -46,7 +46,7 @@ fn vs_main(
 
 @fragment
 fn fs_main(frag : VSOut) -> @location(0) vec4f {
-  // yavaş mavi, hızlı turuncu
+  // slow is blue, fast is orange
   let t = clamp(frag.speed / 600.0, 0.0, 1.0);
   let color = mix(vec3f(0.25, 0.55, 1.0), vec3f(1.0, 0.72, 0.25), t);
   return vec4f(color, 0.55);

@@ -10,30 +10,30 @@ export interface GpuContext {
 export async function initWebGPU(
   canvas: HTMLCanvasElement,
 ): Promise<GpuContext | null> {
-  // 1. Tarayıcıda WebGPU var mı?
+  // 1. Does the browser have WebGPU?
   if (!navigator.gpu) return null;
 
-  // 2. Kullanılabilir bir GPU var mı? (sürücü/donanım elvermezse null)
+  // 2. Is there a usable GPU? (null if the driver/hardware will not allow it)
   const adapter = await navigator.gpu.requestAdapter({
     powerPreference: "high-performance",
   });
   if (!adapter) return null;
 
-  // 3. O GPU üzerinde bir oturum aç
+  // 3. Open a session on that GPU
   const device = await adapter.requestDevice();
 
   device.lost.then((info) => {
-    console.error("GPU device kaybedildi:", info.reason, info.message);
+    console.error("GPU device lost:", info.reason, info.message);
   });
 
   device.addEventListener("uncapturederror", (event) => {
     console.error(
-      "Yakalanmamış GPU hatası:",
+      "Uncaptured GPU error:",
       (event as GPUUncapturedErrorEvent).error,
     );
   });
 
-  // 4. Canvas'ın WebGPU context'i (canvas başka bir context'e ayrılmışsa null)
+  // 4. The canvas's WebGPU context (null if the canvas is already bound to another context)
   const context = canvas.getContext("webgpu");
   if (!context) return null;
 

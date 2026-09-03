@@ -1,55 +1,55 @@
 # webgpu-compute-particles
 
-Parçacık verisi GPU'da kalıyor. Bir WGSL compute shader konum ve hızı yerinde
-güncelliyor, render pass **aynı** storage buffer'ı okuyor, CPU'dan yukarı kare
-başına sadece 48 bayt uniform gidiyor. `dispatchWorkgroups`'un thread değil grup
-sayısı istemesi, sınır koruması, `u32`/`f32` karışık uniform paketleme ve
-`mapAsync` readback'in bedeli — hepsi çalışan kodda.
+The particle data stays on the GPU. A WGSL compute shader updates position and
+velocity in place, the render pass reads the **same** storage buffer, and only 48
+bytes of uniform go up from the CPU per frame. `dispatchWorkgroups` asking for the
+number of groups rather than threads, the bounds guard, mixed `u32`/`f32` uniform
+packing and the price of a `mapAsync` readback — all of it in running code.
 
-Makale: `articles/webgpu-compute-particles/article.md`
+Article: `articles/webgpu-compute-particles/article.md`
 
-## Ne var burada
+## What's here
 
-| Dosya | İçerik |
+| File | Contents |
 |---|---|
-| `src/particles.ts` | `PARTICLE_FLOATS`, `PARTICLE_STRIDE`, `makeRng` (mulberry32), `initParticles`, `particleBufferSize` — saf, tohumlu |
-| `src/cpu-sim.ts` | `stepParticlesCPU` — tavanı gösteren tek çekirdekli döngü, sıfır ayırma |
+| `src/particles.ts` | `PARTICLE_FLOATS`, `PARTICLE_STRIDE`, `makeRng` (mulberry32), `initParticles`, `particleBufferSize` — pure, seeded |
+| `src/cpu-sim.ts` | `stepParticlesCPU` — the single-core loop that shows the ceiling, zero allocation |
 | `src/dispatch.ts` | `WORKGROUP_SIZE`, `workgroupCount` (`Math.ceil`), `fitsInOneDispatch` |
-| `src/sim-params.ts` | `SIM_PARAMS_SIZE = 32`, `createSimParams`, `packSimParams` — aynı `ArrayBuffer` üzerinde `f32` + `u32` görünümü |
+| `src/sim-params.ts` | `SIM_PARAMS_SIZE = 32`, `createSimParams`, `packSimParams` — `f32` + `u32` views over the same `ArrayBuffer` |
 | `src/view-params.ts` | `VIEW_PARAMS_SIZE = 16`, `createViewParams`, `packViewParams` |
-| `src/sim.wgsl.ts` | `SIM_WGSL` — `@compute @workgroup_size(64) cs_main`, `var<storage, read_write>`, sınır koruması |
-| `src/render.wgsl.ts` | `RENDER_WGSL` — vertex buffer'sız quad, `var<storage, read>`, hız→renk |
-| `src/pipelines.ts` | `createSimPipeline` + `createParticleRenderPipeline` (katkı harmanlama) |
-| `src/gpu-particles.ts` | `createParticleBuffer` — `STORAGE \| COPY_DST \| COPY_SRC`, **tek seferlik** `writeBuffer` |
-| `src/renderer.ts` | `createGpuParticleRenderer` — iki pipeline, iki ayrı bind group, tek encoder'da compute + render |
-| `src/readback.ts` | `readbackByteLength` (saf) + `readParticles` — staging buffer, `copyBufferToBuffer`, `mapAsync` |
-| `src/gpu-info.ts` | `describeAdapter` — adapter'ın bildirdiği GPU adı |
-| `src/gpu.ts` | `initWebGPU` (#12'den, `adapter` alanı eklendi) |
-| `src/format.ts`, `src/canvas.ts` | `pickCanvasFormat`, `resizeCanvas` — #12'den kopya |
-| `src/cpu-fallback.ts` | WebGPU yoksa Canvas2D + `stepParticlesCPU` yolu |
-| `src/main.ts` | Demo girişi: rozet, HUD, 10k/100k/500k düğmeleri, "Örnekle" (readback) |
-| `bench/cpu-sim.bench.ts` | Node bench: sözleşme doğruluğu + CPU döngüsünün kare başına maliyeti |
-| `test/*.test.ts` | vitest: 22 saf test — GPU/DOM/`navigator` çağrısı YOK |
+| `src/sim.wgsl.ts` | `SIM_WGSL` — `@compute @workgroup_size(64) cs_main`, `var<storage, read_write>`, bounds guard |
+| `src/render.wgsl.ts` | `RENDER_WGSL` — quad without a vertex buffer, `var<storage, read>`, speed→color |
+| `src/pipelines.ts` | `createSimPipeline` + `createParticleRenderPipeline` (additive blending) |
+| `src/gpu-particles.ts` | `createParticleBuffer` — `STORAGE \| COPY_DST \| COPY_SRC`, **one-time** `writeBuffer` |
+| `src/renderer.ts` | `createGpuParticleRenderer` — two pipelines, two separate bind groups, compute + render in a single encoder |
+| `src/readback.ts` | `readbackByteLength` (pure) + `readParticles` — staging buffer, `copyBufferToBuffer`, `mapAsync` |
+| `src/gpu-info.ts` | `describeAdapter` — the GPU name the adapter reports |
+| `src/gpu.ts` | `initWebGPU` (from #12, with an `adapter` field added) |
+| `src/format.ts`, `src/canvas.ts` | `pickCanvasFormat`, `resizeCanvas` — copied from #12 |
+| `src/cpu-fallback.ts` | The Canvas2D + `stepParticlesCPU` path for when there is no WebGPU |
+| `src/main.ts` | Demo entry point: badge, HUD, 10k/100k/500k buttons, "Sample" (readback) |
+| `bench/cpu-sim.bench.ts` | Node bench: contract correctness + the per-frame cost of the CPU loop |
+| `test/*.test.ts` | vitest: 22 pure tests — NO GPU/DOM/`navigator` calls |
 
-## Kurulum
+## Setup
 
 ```bash
 npm install
 ```
 
-## Çalıştırma
+## Running
 
 ```bash
-npm run dev      # Vite dev server — tarayıcıda GPU parçacık demosu
+npm run dev      # Vite dev server — the GPU particle demo in the browser
 npm run build    # tsc --noEmit + vite build (dist/)
-npm test         # vitest — 22 saf test
-npm run bench    # Node'da sözleşme doğruluğu + CPU döngüsünün tavanı
+npm test         # vitest — 22 pure tests
+npm run bench    # contract correctness in Node + the ceiling of the CPU loop
 ```
 
-> `npm run dev` şart: demo Vite modül sunucusuyla açılır. `index.html`'i `file://`
-> ile açarsanız modüller yüklenmez, ekran boş kalır.
+> `npm run dev` is required: the demo opens through the Vite module server. If you
+> open `index.html` with `file://` the modules will not load and the screen stays blank.
 
-## Beklenen çıktı
+## Expected output
 
 ### `npm test`
 
@@ -67,41 +67,41 @@ npm run bench    # Node'da sözleşme doğruluğu + CPU döngüsünün tavanı
 
 ### `npm run bench`
 
-Apple M2 Pro / Node v22, 2560×1440 sınırlarda:
+Apple M2 Pro / Node v22, with 2560×1440 bounds:
 
 ```
-== sözleşme doğruluğu ==
-  workgroup boyutu           64 (limit 256)                   OK
-  dispatch kenar vakaları    0→0, 1→1, 63→1, 64→1, 65→2       OK
-  grup × 64 >= count         9 örnek boyutta                  OK
-  100.000 → 1563 grup        1563 grup (1562 DEĞİL)           OK
-  tek dispatch sınırı        65535 × 64 = 4.194.240           OK
-  uniform hizalaması         32 bayt, 16'nın katı             OK
-  u32 alanı bozulmadı        u32=100000, f32=1.40e-40         OK
-  parçacık buffer boyutu     1600000 bayt (100k × 16)         OK
-  readback boyutu            8 örnek → 128 bayt               OK
-  sonuç: HEPSİ DOĞRU
+== contract correctness ==
+  workgroup size             64 (limit 256)                   OK
+  dispatch edge cases        0→0, 1→1, 63→1, 64→1, 65→2       OK
+  groups × 64 >= count       at 9 sample sizes                OK
+  100,000 → 1563 groups      1563 groups (NOT 1562)           OK
+  single dispatch limit      65535 × 64 = 4,194,240           OK
+  uniform alignment          32 bytes, multiple of 16         OK
+  u32 field intact           u32=100000, f32=1.40e-40         OK
+  particle buffer size       1600000 bytes (100k × 16)        OK
+  readback size              8 samples → 128 bytes            OK
+  result: ALL CORRECT
 
-== stepParticlesCPU, 600 kare ==
-     10.000 parçacık   kare başına  0.15 ms   15.5 ns/parçacık   yükleme   156 KB/kare
-    100.000 parçacık   kare başına  1.55 ms   15.5 ns/parçacık   yükleme  1563 KB/kare
-    500.000 parçacık   kare başına  7.84 ms   15.7 ns/parçacık   yükleme  7813 KB/kare
+== stepParticlesCPU, 600 frames ==
+     10,000 particles   per frame  0.15 ms   15.5 ns/particle   upload   156 KB/frame
+    100,000 particles   per frame  1.55 ms   15.5 ns/particle   upload  1563 KB/frame
+    500,000 particles   per frame  7.84 ms   15.7 ns/particle   upload  7813 KB/frame
 ```
 
-Node'da GPU yok: compute pass süresi ve kare süresi **tarayıcıda** ölçülür, HUD
-canlı gösterir.
+There is no GPU in Node: compute pass time and frame time are measured **in the
+browser**, and the HUD shows them live.
 
 ### `npm run dev`
 
-- Sol üstte rozet: `WebGPU · apple metal-3` gibi bir satır (tarayıcı alanları
-  maskeleyebilir; "bilinmiyor" da geçerli bir sonuçtur).
-- Altında HUD: FPS, kare süresi, kare başına CPU süresi, aktif parçacık sayısı.
-- 10.000 / 100.000 / 500.000 düğmeleri sahneyi yeniden kurar. 500.000'de donmuş
-  parçacık kümesi görürseniz `workgroupCount` içindeki `Math.ceil` bozulmuştur.
-- "Örnekle (konsol)" düğmesi ilk 8 parçacığın `pos`/`vel` değerlerini konsola basar.
-- `navigator.gpu` yoksa rozet "WebGPU yok — CPU yedeği (10.000 parçacık)" der ve
-  aynı sahne Canvas2D'de çizilir.
+- Badge in the top left: a line like `WebGPU · apple metal-3` (browsers may mask
+  the fields; "unknown" is a valid result too).
+- HUD below it: FPS, frame time, CPU time per frame, active particle count.
+- The 10,000 / 100,000 / 500,000 buttons rebuild the scene. If you see a frozen
+  clump of particles at 500,000, the `Math.ceil` inside `workgroupCount` is broken.
+- The "Sample (console)" button prints the `pos`/`vel` values of the first 8 particles to the console.
+- If there is no `navigator.gpu` the badge says "No WebGPU — CPU fallback (10,000 particles)"
+  and the same scene is drawn with Canvas2D.
 
-## Lisans
+## License
 
 MIT

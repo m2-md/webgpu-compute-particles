@@ -3,7 +3,7 @@ export function resizeCanvas(
   device: GPUDevice,
 ): void {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const maxDim = device.limits.maxTextureDimension2D; // genelde 8192
+  const maxDim = device.limits.maxTextureDimension2D; // usually 8192
   const w = Math.min(Math.floor(canvas.clientWidth * dpr), maxDim);
   const h = Math.min(Math.floor(canvas.clientHeight * dpr), maxDim);
   if (canvas.width !== w || canvas.height !== h) {
@@ -12,7 +12,7 @@ export function resizeCanvas(
   }
 }
 
-// CPU yedek yolunun sürümü: device yok, sınır elle verilir
+// The CPU fallback path's version: no device, the limit is passed by hand
 export function resizeCanvasElement(
   canvas: HTMLCanvasElement,
   maxDim = 8192,

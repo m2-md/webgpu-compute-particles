@@ -1,6 +1,6 @@
 import { PARTICLE_STRIDE } from "./particles";
 
-// Kaç bayt okuyacağız? İstenen örnek sayısını gerçek sayıyla sınırla.
+// How many bytes will we read? Clamp the requested sample count to the real count.
 export function readbackByteLength(
   sampleCount: number,
   totalCount: number,
@@ -9,7 +9,7 @@ export function readbackByteLength(
   return n * PARTICLE_STRIDE;
 }
 
-// TEK SEFERLİK doğrulama içindir. Sıcak döngüde ÇAĞIRMAYIN.
+// This is for ONE-OFF verification. DO NOT CALL it in the hot loop.
 export async function readParticles(
   device: GPUDevice,
   particles: GPUBuffer,
@@ -29,10 +29,10 @@ export async function readParticles(
   encoder.copyBufferToBuffer(particles, 0, staging, 0, size);
   device.queue.submit([encoder.finish()]);
 
-  // Bu satır GPU'nun o noktaya gelmesini bekler: senkronizasyon noktası.
+  // This line waits for the GPU to reach that point: a synchronization point.
   await staging.mapAsync(GPUMapMode.READ);
 
-  // getMappedRange() unmap sonrası geçersizleşir, o yüzden kopyala.
+  // getMappedRange() goes invalid after unmap, so copy it out.
   const copy = new Float32Array(staging.getMappedRange().slice(0));
   staging.unmap();
   staging.destroy();

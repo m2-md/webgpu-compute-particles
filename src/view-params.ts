@@ -1,4 +1,4 @@
-export const VIEW_PARAMS_SIZE = 16; // bayt: 4 × Float32
+export const VIEW_PARAMS_SIZE = 16; // bytes: 4 × Float32
 
 export interface ViewParams {
   readonly buffer: ArrayBuffer;
@@ -10,7 +10,7 @@ export function createViewParams(): ViewParams {
   return { buffer, f32: new Float32Array(buffer) };
 }
 
-// WGSL'deki ViewParams struct'ı: resolution : vec2f, size : f32, _pad : f32
+// The ViewParams struct in WGSL: resolution : vec2f, size : f32, _pad : f32
 export function packViewParams(
   v: ViewParams,
   width: number,

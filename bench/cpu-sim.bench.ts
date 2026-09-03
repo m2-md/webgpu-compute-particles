@@ -1,7 +1,7 @@
-// Saf CPU bench'i (Node, GPU yok).
-// 1) Dispatch aritmetiği ve bayt hizalaması gibi sözleşme maddelerini doğrular.
-// 2) stepParticlesCPU'yu 10k / 100k / 500k parçacıkta 600 kare koşturup
-//    kare başına ms ve parçacık başına ns basar.
+// Pure CPU bench (Node, no GPU).
+// 1) Verifies the contract items: dispatch arithmetic, byte alignment and friends.
+// 2) Runs stepParticlesCPU for 600 frames at 10k / 100k / 500k particles and
+//    prints ms per frame and ns per particle.
 
 import { stepParticlesCPU } from "../src/cpu-sim";
 import { initParticles, makeRng, particleBufferSize } from "../src/particles";
@@ -21,19 +21,19 @@ let allOk = true;
 function check(label: string, ok: boolean, detail: string): void {
   allOk &&= ok;
   console.log(
-    `  ${label.padEnd(26)} ${detail.padEnd(32)} ${ok ? "OK" : "HATA"}`,
+    `  ${label.padEnd(26)} ${detail.padEnd(32)} ${ok ? "OK" : "FAIL"}`,
   );
 }
 
-console.log("== sözleşme doğruluğu ==");
+console.log("== contract correctness ==");
 
 check(
-  "workgroup boyutu",
+  "workgroup size",
   WORKGROUP_SIZE === 64 && WORKGROUP_SIZE <= 256,
   `${WORKGROUP_SIZE} (limit 256)`,
 );
 check(
-  "dispatch kenar vakaları",
+  "dispatch edge cases",
   workgroupCount(0) === 0 &&
     workgroupCount(1) === 1 &&
     workgroupCount(63) === 1 &&
@@ -46,16 +46,16 @@ let invariantOk = true;
 for (const n of [1, 7, 63, 64, 65, 999, 10_000, 100_000, 500_000]) {
   invariantOk &&= workgroupCount(n) * WORKGROUP_SIZE >= n;
 }
-check("grup × 64 >= count", invariantOk, "9 örnek boyutta");
+check("groups × 64 >= count", invariantOk, "at 9 sample sizes");
 check(
-  "100.000 → 1563 grup",
+  "100,000 → 1563 groups",
   workgroupCount(100_000) === 1563,
-  `${workgroupCount(100_000)} grup (1562 DEĞİL)`,
+  `${workgroupCount(100_000)} groups (NOT 1562)`,
 );
 check(
-  "tek dispatch sınırı",
+  "single dispatch limit",
   fitsInOneDispatch(4_194_240) && !fitsInOneDispatch(4_194_241),
-  "65535 × 64 = 4.194.240",
+  "65535 × 64 = 4,194,240",
 );
 
 const params = packSimParams(
@@ -69,36 +69,36 @@ const params = packSimParams(
   0.999,
 );
 check(
-  "uniform hizalaması",
+  "uniform alignment",
   params.buffer.byteLength === SIM_PARAMS_SIZE &&
     params.buffer.byteLength % 16 === 0,
-  `${params.buffer.byteLength} bayt, 16'nın katı`,
+  `${params.buffer.byteLength} bytes, multiple of 16`,
 );
 check(
-  "u32 alanı bozulmadı",
+  "u32 field intact",
   params.u32[1] === 100_000 && params.f32[1] !== 100_000,
   `u32=${params.u32[1]}, f32=${params.f32[1].toExponential(2)}`,
 );
 check(
-  "parçacık buffer boyutu",
+  "particle buffer size",
   particleBufferSize(100_000) === 1_600_000,
-  `${particleBufferSize(100_000)} bayt (100k × 16)`,
+  `${particleBufferSize(100_000)} bytes (100k × 16)`,
 );
 check(
-  "readback boyutu",
+  "readback size",
   readbackByteLength(8, 100_000) === 128 &&
     readbackByteLength(200, 100) === 1600,
-  "8 örnek → 128 bayt",
+  "8 samples → 128 bytes",
 );
 
-console.log(`  sonuç: ${allOk ? "HEPSİ DOĞRU" : "HATALI"}`);
+console.log(`  result: ${allOk ? "ALL CORRECT" : "FAILED"}`);
 
 const FRAMES = 600;
 const SIZES = [10_000, 100_000, 500_000];
 const W = 2560;
 const H = 1440;
 
-// Isınma: JIT'in optimize etmesi için.
+// Warm-up: so the JIT gets a chance to optimize.
 {
   const warm = initParticles(10_000, W, H, makeRng(1));
   for (let f = 0; f < 60; f++) {
@@ -106,7 +106,7 @@ const H = 1440;
   }
 }
 
-console.log(`\n== stepParticlesCPU, ${FRAMES} kare ==`);
+console.log(`\n== stepParticlesCPU, ${FRAMES} frames ==`);
 
 let checksum = 0;
 for (const count of SIZES) {
@@ -123,14 +123,14 @@ for (const count of SIZES) {
   const uploadKB = (count * 16) / 1024;
 
   console.log(
-    `  ${count.toLocaleString("tr-TR").padStart(9)} parçacık   ` +
-      `kare başına ${perFrame.toFixed(2).padStart(5)} ms   ` +
-      `${perParticleNs.toFixed(1).padStart(4)} ns/parçacık   ` +
-      `yükleme ${uploadKB.toFixed(0).padStart(5)} KB/kare`,
+    `  ${count.toLocaleString("en-US").padStart(9)} particles   ` +
+      `per frame ${perFrame.toFixed(2).padStart(5)} ms   ` +
+      `${perParticleNs.toFixed(1).padStart(4)} ns/particle   ` +
+      `upload ${uploadKB.toFixed(0).padStart(5)} KB/frame`,
   );
 }
 
-console.log(`  checksum: ${checksum.toFixed(3)} (optimizasyon engeli)`);
+console.log(`  checksum: ${checksum.toFixed(3)} (optimization barrier)`);
 console.log(
-  "\n  not: GPU compute pass süresi Node'da ölçülemez — tarayıcıda ölç.",
+  "\n  note: GPU compute pass time cannot be measured in Node — measure it in the browser.",
 );

@@ -1,7 +1,7 @@
 export const WORKGROUP_SIZE = 64;
 
-// dispatchWorkgroups THREAD değil GRUP sayısı ister.
-// Son grup dolmasa da başlatılmalı; artan invocation'ları shader eleyecek.
+// dispatchWorkgroups wants the number of GROUPS, not THREADS.
+// The last group must be launched even if it is not full; the shader discards the surplus invocations.
 export function workgroupCount(
   particleCount: number,
   size = WORKGROUP_SIZE,
@@ -10,8 +10,8 @@ export function workgroupCount(
   return Math.ceil(particleCount / size);
 }
 
-// Tek bir dispatch boyutunda kaç workgroup'a izin var?
-// maxComputeWorkgroupsPerDimension varsayılanı 65535.
+// How many workgroups are allowed in a single dispatch dimension?
+// maxComputeWorkgroupsPerDimension defaults to 65535.
 export function fitsInOneDispatch(
   particleCount: number,
   size = WORKGROUP_SIZE,

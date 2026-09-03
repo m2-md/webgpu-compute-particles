@@ -13,9 +13,9 @@ export function createParticleBuffer(
     label: "particles",
     size: particleBufferSize(count),
     usage:
-      GPUBufferUsage.STORAGE | // compute yazacak, vertex okuyacak
-      GPUBufferUsage.COPY_DST | // writeBuffer ile ilk veriyi koyacağız
-      GPUBufferUsage.COPY_SRC, // readback için staging'e kopyalayacağız
+      GPUBufferUsage.STORAGE | // compute will write, vertex will read
+      GPUBufferUsage.COPY_DST | // we will put the initial data in with writeBuffer
+      GPUBufferUsage.COPY_SRC, // we will copy to staging for readback
   });
 
   device.queue.writeBuffer(buffer, 0, data);

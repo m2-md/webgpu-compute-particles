@@ -1,4 +1,4 @@
-export const SIM_PARAMS_SIZE = 32; // bayt, 16'nın katı
+export const SIM_PARAMS_SIZE = 32; // bytes, a multiple of 16
 
 export interface SimParams {
   readonly buffer: ArrayBuffer;
@@ -15,7 +15,7 @@ export function createSimParams(): SimParams {
   };
 }
 
-// WGSL'deki SimParams struct'ının bayt düzeni. Sıra kritik.
+// Byte layout of the SimParams struct in WGSL. The order is critical.
 export function packSimParams(
   p: SimParams,
   dt: number,
@@ -27,7 +27,7 @@ export function packSimParams(
   damping: number,
 ): SimParams {
   p.f32[0] = dt;
-  p.u32[1] = count >>> 0; // u32 görünümü: tamsayı bitleri
+  p.u32[1] = count >>> 0; // u32 view: integer bits
   p.f32[2] = boundsX;
   p.f32[3] = boundsY;
   p.f32[4] = gravityX;

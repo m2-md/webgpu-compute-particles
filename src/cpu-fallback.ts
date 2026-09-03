@@ -6,14 +6,14 @@ export interface CpuFallback {
   stop(): void;
 }
 
-// WebGPU yoksa devreye giren yol: aynı stepParticlesCPU, Canvas2D çizimi.
+// The path that kicks in when there is no WebGPU: the same stepParticlesCPU, drawn with Canvas2D.
 export function startCpuFallback(
   canvas: HTMLCanvasElement,
   count: number,
   onFrame?: (frameMs: number, count: number) => void,
 ): CpuFallback {
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas2D context alınamadı");
+  if (!ctx) throw new Error("Could not get the Canvas2D context");
 
   resizeCanvasElement(canvas);
   const data = initParticles(count, canvas.width, canvas.height, makeRng(1337));

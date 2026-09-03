@@ -9,7 +9,7 @@ export function createSimPipeline(device: GPUDevice): GPUComputePipeline {
 
   return device.createComputePipeline({
     label: "particle-sim-pipeline",
-    layout: "auto", // bind group layout'unu shader'dan çıkar
+    layout: "auto", // derive the bind group layout from the shader
     compute: { module, entryPoint: "cs_main" },
   });
 }
@@ -26,7 +26,7 @@ export function createParticleRenderPipeline(
   return device.createRenderPipeline({
     label: "particle-render-pipeline",
     layout: "auto",
-    vertex: { module, entryPoint: "vs_main" }, // buffers YOK
+    vertex: { module, entryPoint: "vs_main" }, // NO buffers
     fragment: {
       module,
       entryPoint: "fs_main",
@@ -36,7 +36,7 @@ export function createParticleRenderPipeline(
           blend: {
             color: {
               srcFactor: "src-alpha",
-              dstFactor: "one", // katkı harmanlama
+              dstFactor: "one", // additive blending
               operation: "add",
             },
             alpha: { srcFactor: "zero", dstFactor: "one", operation: "add" },

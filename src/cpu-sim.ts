@@ -1,4 +1,4 @@
-// Parçacık başına 4 float: posX, posY, velX, velY (düzen src/particles.ts'te)
+// 4 floats per particle: posX, posY, velX, velY (layout in src/particles.ts)
 import { PARTICLE_FLOATS } from "./particles";
 export { PARTICLE_FLOATS };
 
@@ -23,7 +23,7 @@ export function stepParticlesCPU(
     px += vx * dt;
     py += vy * dt;
 
-    // duvarlardan sek, her sekişte enerjinin %20'sini yut
+    // bounce off the walls, swallow 20% of the energy on every bounce
     if (px < 0) {
       px = 0;
       vx = -vx * 0.8;

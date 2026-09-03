@@ -6,7 +6,7 @@ import { createParticleRenderPipeline, createSimPipeline } from "./pipelines";
 import { createSimParams, packSimParams } from "./sim-params";
 import { createViewParams, packViewParams } from "./view-params";
 
-export const PARTICLE_SIZE = 2.5; // piksel
+export const PARTICLE_SIZE = 2.5; // pixels
 
 export interface ParticleRenderer {
   resize(): void;
@@ -27,7 +27,7 @@ export function createGpuParticleRenderer(
   const simPipeline = createSimPipeline(device);
   const renderPipeline = createParticleRenderPipeline(device, gpu.format);
 
-  // Kare başına ayırma yok: iki uniform paketi bir kez kuruluyor.
+  // No per-frame allocation: the two uniform packs are built once.
   const simParams = createSimParams();
   const viewParams = createViewParams();
 
@@ -52,8 +52,8 @@ export function createGpuParticleRenderer(
     canvas.height,
   );
 
-  // İki pipeline da layout: "auto" kullanıyor, layout'lar paylaşılmaz:
-  // aynı buffer için İKİ AYRI bind group gerekir.
+  // Both pipelines use layout: "auto", and layouts are not shared:
+  // the same buffer needs TWO SEPARATE bind groups.
   let simBindGroup = makeSimBindGroup();
   let renderBindGroup = makeRenderBindGroup();
 
@@ -114,7 +114,7 @@ export function createGpuParticleRenderer(
     },
 
     render(now: number): void {
-      const dt = Math.min((now - last) / 1000, 1 / 30); // sekme dönüşünde patlamasın
+      const dt = Math.min((now - last) / 1000, 1 / 30); // do not let it blow up when the tab comes back
       last = now;
 
       packSimParams(
@@ -134,14 +134,14 @@ export function createGpuParticleRenderer(
 
       const encoder = device.createCommandEncoder({ label: "frame" });
 
-      // 1) Simülasyon: veriyi GPU'da güncelle
+      // 1) Simulation: update the data on the GPU
       const compute = encoder.beginComputePass({ label: "sim-pass" });
       compute.setPipeline(simPipeline);
       compute.setBindGroup(0, simBindGroup);
       compute.dispatchWorkgroups(workgroupCount(count));
       compute.end();
 
-      // 2) Çizim: AYNI buffer'ı oku
+      // 2) Draw: read the SAME buffer
       const pass = encoder.beginRenderPass({
         label: "draw-pass",
         colorAttachments: [
@@ -155,7 +155,7 @@ export function createGpuParticleRenderer(
       });
       pass.setPipeline(renderPipeline);
       pass.setBindGroup(0, renderBindGroup);
-      pass.draw(6, count); // 6 köşe × count instance
+      pass.draw(6, count); // 6 vertices × count instances
       pass.end();
 
       device.queue.submit([encoder.finish()]);

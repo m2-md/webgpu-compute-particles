@@ -12,7 +12,7 @@ const countButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>("button[data-count]"),
 );
 
-const nf = new Intl.NumberFormat("tr-TR");
+const nf = new Intl.NumberFormat("en-US");
 
 function markActive(count: number): void {
   for (const b of countButtons) {
@@ -20,7 +20,7 @@ function markActive(count: number): void {
   }
 }
 
-// CPU yedeğinin HUD'ı: kare başına saf güncelleme + çizim maliyeti.
+// The CPU fallback's HUD: pure update + draw cost per frame.
 let cpuFrames = 0;
 let cpuMs = 0;
 let cpuLastReport = performance.now();
@@ -32,8 +32,8 @@ function reportCpuFrame(frameMs: number, count: number): void {
   if (now - cpuLastReport >= 500) {
     const fps = (cpuFrames * 1000) / (now - cpuLastReport);
     hud.textContent =
-      `${fps.toFixed(0)} FPS · CPU ${(cpuMs / cpuFrames).toFixed(2)} ms/kare · ` +
-      `${nf.format(count)} parçacık (Canvas2D)`;
+      `${fps.toFixed(0)} FPS · CPU ${(cpuMs / cpuFrames).toFixed(2)} ms/frame · ` +
+      `${nf.format(count)} particles (Canvas2D)`;
     cpuFrames = 0;
     cpuMs = 0;
     cpuLastReport = now;
@@ -57,9 +57,9 @@ function startGpuDemo(canvas: HTMLCanvasElement, gpu: GpuContext): void {
     if (now - lastReport >= 500) {
       const fps = (frames * 1000) / (now - lastReport);
       hud.textContent =
-        `${fps.toFixed(0)} FPS · ${(1000 / fps).toFixed(2)} ms/kare · ` +
+        `${fps.toFixed(0)} FPS · ${(1000 / fps).toFixed(2)} ms/frame · ` +
         `CPU ${(cpuAcc / frames).toFixed(2)} ms · ` +
-        `${nf.format(renderer.count)} parçacık`;
+        `${nf.format(renderer.count)} particles`;
       frames = 0;
       cpuAcc = 0;
       lastReport = now;
@@ -101,7 +101,7 @@ async function start(): Promise<void> {
   const gpu = navigator.gpu ? await initWebGPU(canvas) : null;
 
   if (!gpu) {
-    badge.textContent = "WebGPU yok — CPU yedeği (10.000 parçacık)";
+    badge.textContent = "No WebGPU — CPU fallback (10,000 particles)";
     badge.classList.add("warn");
     for (const b of [...countButtons, sampleButton]) b.disabled = true;
     startCpuFallback(canvas, 10_000, reportCpuFrame); // Canvas2D + stepParticlesCPU

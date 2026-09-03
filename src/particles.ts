@@ -1,5 +1,5 @@
 export const PARTICLE_FLOATS = 4; // posX, posY, velX, velY
-export const PARTICLE_STRIDE = 16; // bayt: 4 × Float32
+export const PARTICLE_STRIDE = 16; // bytes: 4 × Float32
 
 export function makeRng(seed: number): () => number {
   let s = seed >>> 0;
@@ -11,7 +11,7 @@ export function makeRng(seed: number): () => number {
   };
 }
 
-// Ekrana yayılmış, rastgele yönlere fırlayan parçacıklar.
+// Particles spread across the screen, flung in random directions.
 export function initParticles(
   count: number,
   width: number,

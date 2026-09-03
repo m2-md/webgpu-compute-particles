@@ -1,7 +1,7 @@
 {
   "name": "webgpu-compute-particles",
   "version": "1.0.0",
-  "description": "WebGPU compute shader ile GPU'da kalan parçacık simülasyonu: storage buffer, dispatchWorkgroups, compute + render zinciri ve readback.",
+  "description": "GPU-resident particle simulation in WebGPU using WGSL compute shaders: a read_write storage buffer updated in place, workgroup thread dispatch, and zero CPU-to-GPU data readback bottleneck.",
   "type": "module",
   "license": "MIT",
   "scripts": {
