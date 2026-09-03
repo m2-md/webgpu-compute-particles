@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGPU Compute Shader ile 100.000 Parçacık</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #080a14;
+        color: #e6e8ff;
+        font:
+          13px/1.4 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+      #stage {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      #badge,
+      #hud,
+      #controls {
+        position: fixed;
+        left: 12px;
+        padding: 6px 12px;
+        border: 1px solid #7c3aed;
+        border-radius: 6px;
+        background: rgba(8, 10, 20, 0.8);
+        letter-spacing: 0.04em;
+      }
+      #badge {
+        top: 12px;
+      }
+      #hud {
+        top: 48px;
+      }
+      #controls {
+        top: 84px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      #badge.warn {
+        border-color: #f59e0b;
+        color: #f59e0b;
+      }
+      button {
+        font: inherit;
+        color: #e6e8ff;
+        background: transparent;
+        border: 1px solid #3a3f66;
+        border-radius: 4px;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        border-color: #7c3aed;
+      }
+      button.active {
+        border-color: #7c3aed;
+        background: rgba(124, 58, 237, 0.25);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div id="badge">başlatılıyor…</div>
+    <div id="hud">ölçülüyor…</div>
+    <div id="controls">
+      <button data-count="10000">10.000</button>
+      <button data-count="100000">100.000</button>
+      <button data-count="500000">500.000</button>
+      <button id="sample">Örnekle (konsol)</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
