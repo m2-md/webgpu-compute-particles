@@ -1,4 +1,4 @@
-# webgpu-compute-particles
+# 100,000 Particles with WebGPU Compute Shaders
 
 <!-- LINKS:BEGIN — üretildi: scripts/sync-repo-links.py · elle düzenleme -->
 **▶ [Live demo](https://m2-md.github.io/webgpu-compute-particles/)** · [Source](https://github.com/m2-md/webgpu-compute-particles)
@@ -9,8 +9,6 @@ velocity in place, the render pass reads the **same** storage buffer, and only 4
 bytes of uniform go up from the CPU per frame. `dispatchWorkgroups` asking for the
 number of groups rather than threads, the bounds guard, mixed `u32`/`f32` uniform
 packing and the price of a `mapAsync` readback — all of it in running code.
-
-Article: `articles/webgpu-compute-particles/article.md`
 
 ## What's here
 
