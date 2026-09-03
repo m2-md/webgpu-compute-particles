@@ -1,5 +1,9 @@
 # webgpu-compute-particles
 
+<!-- LINKS:BEGIN — üretildi: scripts/sync-repo-links.py · elle düzenleme -->
+**▶ [Live demo](https://m2-md.github.io/webgpu-compute-particles/)** · [Source](https://github.com/m2-md/webgpu-compute-particles)
+<!-- LINKS:END -->
+
 The particle data stays on the GPU. A WGSL compute shader updates position and
 velocity in place, the render pass reads the **same** storage buffer, and only 48
 bytes of uniform go up from the CPU per frame. `dispatchWorkgroups` asking for the
